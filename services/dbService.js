@@ -12,8 +12,22 @@ define(function (require, exports, module) {
 var faker = require('faker');
 var MongoClient = require('mongodb').MongoClient;
 var MONGOURL = 'mongodb://localhost:27017/db';
-var db;
-MongoClient.connect('mongodb://localhost:27017/db', function(err,database){
+var listingModel = require('../services/models/listing');
+var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
+
+
+mongoose.connect('mongodb://localhost:27017/db');
+
+var db = mongoose.connection;
+db.on('error',console.error.bind(console,'connection error:'));
+db.once('open',function(){
+
+console.log("Connected");
+});
+
+
+/*MongoClient.connect('mongodb://localhost:27017/db', function(err,database){
     if(err) {
       console.log("Couldn't connect to the DB");
       return
@@ -22,7 +36,7 @@ MongoClient.connect('mongodb://localhost:27017/db', function(err,database){
       db = database;
       console.log("Connected to the database");
     }
-});
+});*/
 
 function populateDatabase(){
 
@@ -32,10 +46,10 @@ function populateDatabase(){
   }
 
 
+//In mongoose each schema maps to a collection
 
-
-var collection = db.collection('houses');
-var data1 = {
+//var collection = db.collection('houses');
+var data1 = new listingModel({
         title: "64 Wolfe Street",
         thumbnail: "images/img1.JPG",
         images: ["images/img12.JPG","images/img13.JPG","images/img14.JPG"],
@@ -55,8 +69,8 @@ var data1 = {
         hasCarParking: faker.lorem.words(),
         hasBikeParking: faker.lorem.words(),
         hasInternetIncluded: faker.lorem.words()
-      }
-var data2 = {
+      });
+var data2 = new listingModel({
          title: "Fully Renovated 3 Bedroom House in the vicinity of McBurney Park",
         thumbnail: "images/img2.JPG" ,
         images: ["images/img22.JPG","images/img23.JPG","images/img24.JPG"],
@@ -76,8 +90,8 @@ var data2 = {
         hasCarParking: faker.lorem.words(),
         hasBikeParking: faker.lorem.words(),
         hasInternetIncluded: faker.lorem.words()
-      }
-var data3 = {
+      });
+var data3 = new listingModel({
         title: "Tanner Drive - 3 Bedroom Townhome for Rent",
         thumbnail: "images/img3.JPG",
         images: ["images/img32.JPG","images/img33.JPG","images/img34.JPG"],
@@ -97,8 +111,8 @@ var data3 = {
         hasCarParking: faker.lorem.words(),
         hasBikeParking: faker.lorem.words(),
         hasInternetIncluded: faker.lorem.words()
-      }
-var data4 = {
+      });
+var data4 = new listingModel({
         title: "ATTN Students - Close to Queens - Available May 1st - 27 Main St",
         thumbnail: "images/img4.JPG",
         images: ["images/img42.JPG","images/img43.JPG","images/img44.JPG"],
@@ -118,8 +132,8 @@ var data4 = {
         hasCarParking: faker.lorem.words(),
         hasBikeParking: faker.lorem.words(),
         hasInternetIncluded: faker.lorem.words()
-      }
-var data5 = {
+      });
+var data5 = new listingModel({
         title: "4-Bedroom House Steps From Campus (for winter term or May 2017)",
         thumbnail: "images/img5.JPG",
         images: ["images/img52.JPG","images/img53.JPG","images/img54.JPG"],
@@ -139,14 +153,43 @@ var data5 = {
         hasCarParking: faker.lorem.words(),
         hasBikeParking: faker.lorem.words(),
         hasInternetIncluded: faker.lorem.words()
-      }
+      });
 
-      collection.insert(data1);
-      collection.insert(data2);
-      collection.insert(data3);
-      collection.insert(data4);
-      collection.insert(data5);
+      data1.save(function(err){
+        if (err) throw err;
 
+        console.log("Listing saved successfully");
+
+      });
+
+      data2.save(function(err){
+        if (err) throw err;
+
+        console.log("Listing saved successfully");
+
+      });
+
+      data3.save(function(err){
+        if (err) throw err;
+
+        console.log("Listing saved successfully");
+
+      });
+
+      data4.save(function(err){
+        if (err) throw err;
+
+        console.log("Listing saved successfully");
+
+      });
+
+      data5.save(function(err){
+        if (err) throw err;
+
+        console.log("Listing saved successfully");
+
+      });
+      
 
 }
 
@@ -154,7 +197,7 @@ var data5 = {
 
 
 
-function getHouseList(callback) {
+/*function getHouseList(callback) {
   db.collection('houses').find({}).toArray(function(err, docs) {
     if (err) {
       console.log("Failed to fetch house list in dbService");
@@ -164,13 +207,81 @@ function getHouseList(callback) {
 
     callback(null, docs);
   });
+}*/
+
+function getHouseList(callback){
+listingModel.find({},function(err,docs){
+  if (err){
+    console.log("Failed to fetch house list in dbService");
+    callback(err, null);
+    return;
+  }
+
+  callback(null,docs);
+  });
 }
 
+function getSingleListing(id,callback){
+  listingModel.findById(id).toArray(function(err,docs){
+  if (err){
+    console.log("Failed to fetch a single listing in dbService");
+    callback(err, null);
+    return;
+  }
+
+  callback(null,docs);
+  });
+}
+
+
+//Data needs to be a JSON object
+function insertListing(data,callback){
+  data = new listingModel();
+  data.save(function(err){
+        if (err) {
+          callback(err);
+          return;
+        }
+
+        console.log("Listing saved successfully");
+        callback(null);
+      });
+
+}
+
+function removeSingleListing(id,callback){
+listingModel.findByIdAndRemove(id,function(err){
+  if (err){
+    console.log("Failed to fetch a single listing in dbService");
+    callback(err, null);
+    return;
+  }
+
+  callback(null);
+  });
+
+}
+
+function removeAllListings(callback){
+  mongoose.connection.db.dropDatabase(function(err){
+    if (err){
+    console.log("Failed to delete database");
+    callback(err);
+    return;
+}
+  
+  callback(null);
+
+  });
+}
 
 
   module.exports = {
     getHouseList: getHouseList,
-    populateDatabase: populateDatabase
+    populateDatabase: populateDatabase,
+    removeAllListings: removeAllListings,
+    insertListing: insertListing
+
 
   };
 
